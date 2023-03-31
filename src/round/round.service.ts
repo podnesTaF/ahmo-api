@@ -47,9 +47,9 @@ export class RoundService {
 
   findOne(id: number, q: string | undefined) {
     if(q) {
-      return this.repository.findOne({where: {game: {id}, round_status: 'active'},  relations: ['moves', 'riddler', 'game']})
+      return this.repository.findOne({where: {game: {id}, round_status: 'active'},  relations: ['moves','moves.player', 'riddler', 'game']})
     }
-    return this.repository.findOne({where: {id}, relations: ['moves', 'riddler', 'game']})
+    return this.repository.findOne({where: {id}, relations: ['moves', 'moves.player', 'riddler', 'game']})
   }
 
   async update(id: number, dto: any) {
