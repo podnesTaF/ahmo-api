@@ -22,6 +22,9 @@ export class RoundEntity {
   @Column()
   round_status: string;
 
+  @Column({default: 0})
+  attempt: number
+
   @Column({ nullable: true })
   round_winner: number;
 
