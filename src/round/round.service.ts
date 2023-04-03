@@ -65,6 +65,12 @@ export class RoundService {
     }
   }
 
+  async addAttempt(id: number) {
+    const round = await this.repository.findOne({where: {id}})
+    round.attempt++
+    return this.repository.save(round)
+  }
+
   remove(id: number) {
     return `This action removes a #${id} round`;
   }

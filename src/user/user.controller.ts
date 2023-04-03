@@ -2,15 +2,15 @@ import {Controller, Get, Request, Body, Patch, Param, Delete, UseGuards, Query} 
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import {query} from "express";
 
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  findAll(@Query('query') query?: string) {
-    return this.userService.findAll(query);
+  @UseGuards(JwtAuthGuard)
+  findAll(@Request() req, @Query('query') query?: string) {
+    return this.userService.findAll(query, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -32,5 +32,9 @@ export class UserController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.remove(+id);
+  }
+  @Get('search')
+  search(@Query('query') query?: string) {
+    return this.userService.search(query)
   }
 }

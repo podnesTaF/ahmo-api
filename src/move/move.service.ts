@@ -28,7 +28,7 @@ export class MoveService {
       const isRight = move.move_data.toLowerCase().split(' ').includes(round.round_data)
 
     if(move.move_type === 'statement') {
-        round.attempt++
+        await this.roundService.addAttempt(round.id)
         if(isRight) {
             await this.roundService.update(round.id, {round_status: 'finished', round_winner: user.id, chatId: round.game.id})
             return {...move, correct: true}
