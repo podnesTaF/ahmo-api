@@ -52,12 +52,25 @@ export class ChatService {
  async findAll() {
     const qb = await this.repository.createQueryBuilder('chat')
       .leftJoinAndSelect('chat.members', 'member')
-      .leftJoinAndSelect('member.user', 'user');
-    return qb.getMany()
+      .leftJoinAndSelect('member.user', 'user')
+      .leftJoin('chat.messages', 'messages', 'messages.id = (SELECT MAX(id) FROM messages WHERE chatId = chat.id)')
+      .orderBy('messages.createdAt', 'DESC');
   }
 
   async findOne(id: number) {
-    return this.repository.findOne({where: {id}, relations: ['members', 'members.user', 'admin', 'messages', 'messages.sender', 'messages.chat', 'rounds', 'rounds.riddler', 'rounds.moves']})
+    if(!id) return
+    const chat = await this.repository.findOne({
+      where: { id },
+      relations: ['members', 'members.user', 'messages', 'messages.sender', 'admin', 'rounds', 'rounds.riddler', 'rounds.moves'],
+    });
+
+    const sortedMessages = chat.messages.sort((a, b) => {
+      const timeA = new Date(a.createdAt).getTime();
+      const timeB = new Date(b.createdAt).getTime();
+      return timeA - timeB;
+    });
+
+    return {...chat, messages: sortedMessages }
   }
 
   update(id: number, updateChatDto: UpdateChatDto) {
@@ -68,18 +81,19 @@ export class ChatService {
     return `This action removes a #${id} chat`;
   }
 
- async findChatsByUserId(userId: number, query?: string) {
+  async findChatsByUserId(userId: number, query?: string) {
+    if(!userId) return 
     const qb = this.repository.createQueryBuilder('chat');
-    qb.leftJoin('chat.members', 'member');
-    qb.leftJoin('member.user', 'user');
-    qb.where('user.id = :currentUserId', { currentUserId: userId });
     qb.leftJoinAndSelect('chat.members', 'chatMembers');
     qb.leftJoinAndSelect('chatMembers.user', 'chatMembersUser');
-    qb.leftJoinAndSelect('chat.messages', 'chatMessages');
+    qb.leftJoinAndSelect('chat.messages', 'chatMessages')
+    qb.leftJoinAndSelect('chatMessages.sender', 'sender')
+    .orderBy('chatMessages.createdAt', 'DESC');
+    qb.where('chatMembersUser.id = :currentUserId', { currentUserId: userId });
     let chats = await qb.getMany();
 
     chats = chats.map(chat => {
-      const lastMessage = chat.messages.length ? chat.messages[chat.messages.length - 1] : null;
+      const lastMessage = chat.messages.length ? chat.messages[0] : null;
       delete chat.messages;
       return {
         ...chat,
@@ -89,15 +103,19 @@ export class ChatService {
     return chats;
   }
 
-   findGamesByUserId(id: number, query?: string) {
+  findGamesByUserId(id: number, query?: string) {
     const qb = this.repository.createQueryBuilder('chat');
     qb.leftJoin('chat.members', 'member');
     qb.leftJoin('member.user', 'user');
     qb.where('user.id = :currentUserId', { currentUserId: id });
+    qb.leftJoin('chat.messages', 'messages')
+    .orderBy('messages.createdAt', 'DESC');
     qb.leftJoinAndSelect('chat.members', 'chatMembers');
     qb.leftJoinAndSelect('chatMembers.user', 'chatMembersUser');
     qb.leftJoinAndSelect('chat.rounds', 'rounds');
     qb.where('chat.type = :type', { type: 'game' })
+    qb.where('user.id = :currentUserId', { currentUserId: id });
+    qb.andWhere('chat.type = :type', { type: 'game' })
 
     return qb.getMany();
   }
