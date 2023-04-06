@@ -45,7 +45,7 @@ export class ChatEntity {
   @OneToMany(() => RoundEntity, (round) => round.game)
   rounds: RoundEntity[];
 
-  @OneToMany(() => MessageEntity, (message) => message.chat)
+  @OneToMany(() => MessageEntity, (message) => message.chat,  { eager: true })
   messages: MessageEntity[];
 
   @Column({nullable: true})
