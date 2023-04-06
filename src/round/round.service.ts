@@ -27,6 +27,7 @@ export class RoundService {
 
     // @ts-ignore
     const round = await this.repository.save({
+      submiting: createRoundDto.submiting || 0,
       game,
       riddler,
       round_status: 'active'
