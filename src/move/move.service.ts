@@ -1,22 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { CreateMoveDto } from './dto/create-move.dto';
 import { UpdateMoveDto } from './dto/update-move.dto';
-import {MoveEntity} from "./entities/move.entity";
-import {InjectRepository} from "@nestjs/typeorm";
-import {Repository} from "typeorm";
-import {UserService} from "../user/user.service";
-import {RoundEntity} from "../round/entities/round.entity";
-import {RoundService} from "../round/round.service";
+import { MoveEntity } from './entities/move.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { UserService } from '../user/user.service';
+import { RoundEntity } from '../round/entities/round.entity';
+import { RoundService } from '../round/round.service';
 
 @Injectable()
 export class MoveService {
   constructor(
-     @InjectRepository(MoveEntity)
-        private repository: Repository<MoveEntity>,
-     @InjectRepository(RoundEntity)
-        private repositoryRound: Repository<RoundEntity>,
-     private userService: UserService,
-     private roundService: RoundService,
+    @InjectRepository(MoveEntity)
+    private repository: Repository<MoveEntity>,
+    @InjectRepository(RoundEntity)
+    private repositoryRound: Repository<RoundEntity>,
+    private userService: UserService,
+    private roundService: RoundService,
   ) {}
 
   async create(dto: CreateMoveDto, userId: number) {
@@ -44,29 +44,42 @@ export class MoveService {
       }
     }
 
-    const move = await this.repository.save({...dto, player: user, round});
+    const move = await this.repository.save({ ...dto, player: user, round});
 
-      const isRight = move.move_data.toLowerCase().split(' ').includes(round.round_data)
+    const isRight = move.move_data
+      .toLowerCase()
+      .split(' ')
+      .includes(round.round_data);
 
-    if(move.move_type === 'statement') {
-        await this.roundService.addAttempt(round.id)
-        if(isRight) {
-            await this.roundService.update(round.id, {round_status: 'finished', round_winner: user.id, chatId: round.game.id})
-            return {...move, correct: true}
-        } else if(round.game.game === 'truth or dare') {
-          await this.roundService.update(round.id, {round_status: 'finished', round_winner: round.riddler.id, chatId: round.game.id})
-            return {...move, correct: false}
-        }
-        if(round.attempt >= 3) {
-          await this.roundService.update(round.id, {round_status: 'finished', round_winner: round.riddler.id, chatId: round.game.id})
-          return {...move, correct: false}
-        }
+    if (move.move_type === 'statement') {
+      await this.roundService.addAttempt(round.id);
+      if (isRight) {
+        await this.roundService.update(round.id, {
+          round_status: 'finished',
+          round_winner: user.id,
+          chatId: round.game.id,
+        });
+        return { ...move, correct: true };
+      } else if (round.game.game === 'truth or dare') {
+        await this.roundService.update(round.id, {
+          round_status: 'finished',
+          round_winner: round.riddler.id,
+          chatId: round.game.id,
+        });
+        return { ...move, correct: false };
+      }
+      if (round.attempt >= 3) {
+        await this.roundService.update(round.id, {
+          round_status: 'finished',
+          round_winner: round.riddler.id,
+          chatId: round.game.id,
+        });
+        return { ...move, correct: false };
+      }
     }
 
-    return {...move, correct: isRight}
+    return { ...move, correct: false };
   }
-
-
 
   findAll() {
     return `This action returns all move`;

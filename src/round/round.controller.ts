@@ -12,8 +12,9 @@ export class RoundController {
     return this.roundService.create(createRoundDto);
   }
 
-  findAllInGame(@Query() queries: {gameId: string, limit?: string, page?: string}) {
-    return this.roundService.findAll(+queries.gameId, +queries?.limit, +queries?.page);
+  @Get()
+  findAllInGame(@Query() queries: {gameId: string}) {
+    return this.roundService.findAll(+queries.gameId);
   }
 
   @Get(':id')

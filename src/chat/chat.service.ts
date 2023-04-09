@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { UpdateChatDto } from './dto/update-chat.dto';
 import { ChatEntity } from "./entities/chat.entity";
-import { Repository } from "typeorm";
+import { FindOneOptions, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "../user/entities/user.entity";
 import { MemberEntity } from "../member/entities/member.entity";
@@ -44,26 +44,27 @@ export class ChatService {
     const createdChat = await this.repository.save(chat);
 
     if(createChatDto.game) {
-        await this.roundService.create({chatId: createdChat.id, riddlerId: createdChat.admin.id, submiting: 2})
+      await this.roundService.create({chatId: createdChat.id, riddlerId: createdChat.admin.id, submiting: 2})
       return this.repository.save(createdChat);
     }
 
     return createdChat;
   }
 
- async findAll() {
+  async findAll() {
     const qb = await this.repository.createQueryBuilder('chat')
       .leftJoinAndSelect('chat.members', 'member')
       .leftJoinAndSelect('member.user', 'user')
       .leftJoin('chat.messages', 'messages', 'messages.id = (SELECT MAX(id) FROM messages WHERE chatId = chat.id)')
       .orderBy('messages.createdAt', 'DESC');
+    return qb.getMany();
   }
 
   async findOne(id: number) {
-    if(!id) return
+    if(!id) return 
     const chat = await this.repository.findOne({
       where: { id },
-      relations: ['members', 'members.user', 'messages', 'messages.sender', 'admin', 'rounds', 'rounds.riddler', 'rounds.moves'],
+      relations: ['members', 'members.user', 'messages', 'messages.sender', 'admin', 'rounds', 'rounds.riddler', 'rounds.moves', 'rounds.moves.player'],
     });
 
     const sortedMessages = chat.messages.sort((a, b) => {
@@ -89,7 +90,7 @@ export class ChatService {
     return `This action removes a #${id} chat`;
   }
 
-    async findChatsByUserId(userId: number, query?: string) {
+  async findChatsByUserId(userId: number, query?: string) {
     if(!userId) return 
     const qb = this.repository.createQueryBuilder('chat');
     qb.leftJoinAndSelect('chat.messages', 'chatMessages')
@@ -154,8 +155,8 @@ export class ChatService {
 
     return qb.getMany();
   }
-
   searchChats(id: number, queries: {query: string, type: string}) {
+
     const qb = this.repository.createQueryBuilder('chat');
     qb.leftJoinAndSelect('chat.members', 'chatMembers');
     qb.leftJoinAndSelect('chatMembers.user', 'chatMembersUser');
