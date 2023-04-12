@@ -19,11 +19,11 @@ import { MessageEntity } from "./message/entities/message.entity";
   imports: [
     TypeOrmModule.forRoot({
       type: 'mysql',
-      host: 'localhost',
-      port: 3306,
-      username: 'root',
-      password: 'podnes1972',
-      database: 'ahmo',
+      host: process.env.MYSQLHOST,
+      port: +process.env.MYSQLPORT,
+      username: process.env.MYSQLUSER,
+      password: process.env.MYSQLPASSWORD,
+      database: process.env.MYSQLDATABASE,
       entities: [UserEntity, RoundEntity, MoveEntity, MemberEntity, ChatEntity, MessageEntity],
       synchronize: true,
     }),
