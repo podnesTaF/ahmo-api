@@ -29,6 +29,11 @@ export class ChatService {
       chat.game = createChatDto.game
     }
 
+    if(createChatDto.name) {
+      chat.name = createChatDto.name;
+    }
+    
+
     chat.name = createChatDto.name;
     chat.type = createChatDto.type;
     chat.admin = user;
@@ -82,12 +87,12 @@ export class ChatService {
     return {...chat, messages: sortedMessages, rounds: sortedRounds }
   }
 
-  update(id: number, updateChatDto: UpdateChatDto) {
-    return `This action updates a #${id} chat`;
+  async update(id: number, memberId: number) {
+    return 'update chat'
   }
 
   remove(id: number) {
-    return `This action removes a #${id} chat`;
+    return this.repository.delete(id)
   }
 
   async findChatsByUserId(userId: number, query?: string) {
@@ -138,7 +143,7 @@ export class ChatService {
     })
     return chats;
   }
-
+  
   findGamesByUserId(id: number, query?: string) {
     const qb = this.repository.createQueryBuilder('chat');
     qb.leftJoin('chat.members', 'member');

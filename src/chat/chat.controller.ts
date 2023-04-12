@@ -38,8 +38,8 @@ export class ChatController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChatDto: UpdateChatDto) {
-    return this.chatService.update(+id, updateChatDto);
+  update(@Param('id') id: string, @Body() updateChatDto: {memberId: number}) {
+    return this.chatService.update(+id, updateChatDto.memberId);
   }
 
   @Delete(':id')
