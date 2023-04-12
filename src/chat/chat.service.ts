@@ -33,8 +33,6 @@ export class ChatService {
       chat.name = createChatDto.name;
     }
     
-
-    chat.name = createChatDto.name;
     chat.type = createChatDto.type;
     chat.admin = user;
     const group = createChatDto.members.split(',').map(memberId => +memberId)
@@ -143,7 +141,7 @@ export class ChatService {
     })
     return chats;
   }
-  
+
   findGamesByUserId(id: number, query?: string) {
     const qb = this.repository.createQueryBuilder('chat');
     qb.leftJoin('chat.members', 'member');

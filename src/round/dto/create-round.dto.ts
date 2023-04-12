@@ -1,4 +1,4 @@
-import {IsNumber, IsOptional} from "class-validator";
+import {IsNumber, IsOptional, IsString} from "class-validator";
 
 export class CreateRoundDto {
     @IsNumber()
@@ -6,7 +6,7 @@ export class CreateRoundDto {
 
     @IsNumber()
     chatId: number
-
+    
     @IsOptional()
     @IsNumber()
     submiting: number

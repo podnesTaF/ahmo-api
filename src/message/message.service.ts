@@ -30,6 +30,7 @@ export class MessageService {
   }
 
   findAll(id: number, limit: number, page: number) {
+
     return this.repository.find({where: {chat: {id}}, relations: ['sender']})
   }
 

@@ -22,14 +22,14 @@ export class RoundEntity {
   @Column()
   round_status: string;
 
+  @Column({ nullable: true })
+  round_winner: number;
+
   @Column({default: 0})
   attempt: number
 
   @Column({default: 0})
   submiting: number
-
-  @Column({ nullable: true })
-  round_winner: number;
 
   @ManyToOne(() => ChatEntity, (chat) => chat.rounds, {
     onDelete: 'CASCADE',

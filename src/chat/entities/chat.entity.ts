@@ -38,18 +38,20 @@ export class ChatEntity {
   })
   admin: UserEntity;
 
-
-  @OneToMany(() => MemberEntity, (member) => member.chat)
+  @OneToMany(() => MemberEntity, (member) => member.chat,  { eager: true, onDelete: 'CASCADE' })
   members: MemberEntity[];
 
   @OneToMany(() => RoundEntity, (round) => round.game)
   rounds: RoundEntity[];
 
-  @OneToMany(() => MessageEntity, (message) => message.chat, { eager: true, onDelete: 'CASCADE' })
+  @OneToMany(() => MessageEntity, (message) => message.chat)
   messages: MessageEntity[];
 
   @Column({nullable: true})
   game: string;
+
+  @Column({nullable: true})
+  image_url: string;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { CreateRoundDto } from './dto/create-round.dto';
-import { UpdateRoundDto } from './dto/update-round.dto';
 import {InjectRepository} from "@nestjs/typeorm";
 import {RoundEntity} from "./entities/round.entity";
 import {Repository} from "typeorm";
@@ -53,7 +52,7 @@ export class RoundService {
     }
     return this.repository.findOne({where: {id}, relations: ['moves', 'moves.player','riddler', 'game']})
   }
-  
+
   async update(id: number, dto: any) {
     if(dto.submiting) {
       const round = await this.repository.findOne({where: {id}})

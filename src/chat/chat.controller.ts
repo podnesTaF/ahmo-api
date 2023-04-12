@@ -25,7 +25,7 @@ export class ChatController {
 
   @Get('/me')
   @UseGuards(JwtAuthGuard)
-  findChatsByUserId(@Request() req, @Query('game') game: boolean) {
+  findChatsByUserId(@Request() req, @Query('game') game?: string) {
     if(game) {
       return this.chatService.findGamesByUserId(req.user.id);
     }
@@ -36,6 +36,8 @@ export class ChatController {
   findOne(@Param('id') id: string) {
     return this.chatService.findOne(+id);
   }
+
+  
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateChatDto: {memberId: number}) {

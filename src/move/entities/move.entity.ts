@@ -19,7 +19,7 @@ export class MoveEntity {
 
   @Column()
   move_type: string;
-
+  
   @Column({nullable: true})
   last_word: string;
 

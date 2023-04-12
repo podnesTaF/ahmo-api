@@ -14,6 +14,7 @@ export class MessageController {
     return this.messageService.create(createMessageDto, req.user.id);
   }
 
+  @Get()
   findAll(@Query() queries: {chatId: string, limit: string; page: string}) {
     const {chatId, limit, page} = queries
     return this.messageService.findAll(+chatId, +limit, +page);
