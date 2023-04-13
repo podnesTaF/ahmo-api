@@ -7,7 +7,6 @@ import { Repository } from 'typeorm';
 import { UserService } from '../user/user.service';
 import { RoundEntity } from '../round/entities/round.entity';
 import { RoundService } from '../round/round.service';
-import axios from 'axios';
 
 @Injectable()
 export class MoveService {
@@ -36,8 +35,8 @@ export class MoveService {
       const url = `https://api.wordnik.com/v4/word.json/${word}/definitions?limit=1&api_key=${apiKey}`;
 
       // make the API request
-      const {data} = await axios.get(url)
-      if(data && accept && !alreadyExist) {
+      const response = await fetch(url)
+      if(response.ok && accept && !alreadyExist) {
         const move = await this.repository.save({ ...dto, player: user, round});
         return {...move, correct: true}
       } else {
