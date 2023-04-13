@@ -36,8 +36,14 @@ export class MoveService {
       const url = `https://api.wordnik.com/v4/word.json/${word}/definitions?limit=1&api_key=${apiKey}`;
 
       // make the API request
-      const res = await axios.get(url)
-      if(res.status !== 404 && accept && !alreadyExist) {
+      let error: any;
+      let res: any;
+      try {
+        res = await axios.get(url)
+      } catch (err) {
+        error = err
+      }
+      if(!error && accept && !alreadyExist) {
         const move = await this.repository.save({ ...dto, player: user, round});
         return {...move, correct: true}
       } else {
