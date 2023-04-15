@@ -1,8 +1,18 @@
-import {Controller, Get, Post, Body, Request, Patch, Param, Delete, UseGuards, Query} from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ChatService } from './chat.service';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 
 @Controller('chats')
 export class ChatController {
@@ -16,17 +26,20 @@ export class ChatController {
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  searchChats(@Request() req, @Query() queries: {query: string, type: string}) {
-    if(req.user.id) {
-      return this.chatService.searchChats(req.user.id, queries)
-    } 
-    return this.chatService.findAll()
+  searchChats(
+    @Request() req,
+    @Query() queries: { query: string; type: string },
+  ) {
+    if (req.user.id) {
+      return this.chatService.searchChats(req.user.id, queries);
+    }
+    return this.chatService.findAll();
   }
 
   @Get('/me')
   @UseGuards(JwtAuthGuard)
   findChatsByUserId(@Request() req, @Query('game') game: boolean) {
-    if(game) {
+    if (game) {
       return this.chatService.findGamesByUserId(req.user.id);
     }
     return this.chatService.findChatsByUserId(req.user.id);
@@ -38,8 +51,11 @@ export class ChatController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChatDto: {memberId: number}) {
-    return this.chatService.update(+id, updateChatDto.memberId);
+  update(
+    @Param('id') id: string,
+    @Body() updateChatDto: { image_url: string },
+  ) {
+    return this.chatService.update(+id, updateChatDto.image_url);
   }
 
   @Delete(':id')
