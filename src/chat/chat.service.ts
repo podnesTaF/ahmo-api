@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { CreateChatDto } from './dto/create-chat.dto';
+import { UpdateChatDto } from './dto/update-chat.dto';
+import { ChatEntity } from "./entities/chat.entity";
+import { FindOneOptions, Repository } from "typeorm";
+import { InjectRepository } from "@nestjs/typeorm";
+import { UserEntity } from "../user/entities/user.entity";
+import { MemberEntity } from "../member/entities/member.entity";
+import { UserService } from "../user/user.service";
+import {RoundService} from "../round/round.service";
 import { MessageEntity } from 'src/message/entities/message.entity';
 import { MoveEntity } from 'src/move/entities/move.entity';
-import { Repository } from 'typeorm';
-import { MemberEntity } from '../member/entities/member.entity';
-import { RoundService } from '../round/round.service';
-import { UserEntity } from '../user/entities/user.entity';
-import { UserService } from '../user/user.service';
-import { CreateChatDto } from './dto/create-chat.dto';
-import { ChatEntity } from './entities/chat.entity';
 
 @Injectable()
 export class ChatService {
@@ -21,24 +22,21 @@ export class ChatService {
     private roundService: RoundService,
   ) {}
 
-  async create(
-    createChatDto: CreateChatDto,
-    user: UserEntity,
-  ): Promise<ChatEntity> {
+  async create(createChatDto: CreateChatDto, user: UserEntity): Promise<ChatEntity> {
     const chat = new ChatEntity();
 
-    if (createChatDto.game) {
-      chat.game = createChatDto.game;
+    if(createChatDto.game) {
+      chat.game = createChatDto.game
     }
 
-    if (createChatDto.name) {
+    if(createChatDto.name) {
       chat.name = createChatDto.name;
     }
-
+    
     chat.type = createChatDto.type;
     chat.admin = user;
-    const group = createChatDto.members.split(',').map((memberId) => +memberId);
-    const memberPromises = group.map(async (memberId) => {
+    const group = createChatDto.members.split(',').map(memberId => +memberId)
+    const memberPromises = group.map(async memberId => {
       const member = new MemberEntity();
       member.user = await this.userService.findOne(memberId);
       member.chat = chat;
@@ -48,12 +46,8 @@ export class ChatService {
     chat.members = members;
     const createdChat = await this.repository.save(chat);
 
-    if (createChatDto.game) {
-      await this.roundService.create({
-        chatId: createdChat.id,
-        riddlerId: createdChat.admin.id,
-        submiting: 2,
-      });
+    if(createChatDto.game) {
+      await this.roundService.create({chatId: createdChat.id, riddlerId: createdChat.admin.id, submiting: 2})
       return this.repository.save(createdChat);
     }
 
@@ -61,34 +55,19 @@ export class ChatService {
   }
 
   async findAll() {
-    const qb = await this.repository
-      .createQueryBuilder('chat')
+    const qb = await this.repository.createQueryBuilder('chat')
       .leftJoinAndSelect('chat.members', 'member')
       .leftJoinAndSelect('member.user', 'user')
-      .leftJoin(
-        'chat.messages',
-        'messages',
-        'messages.id = (SELECT MAX(id) FROM messages WHERE chatId = chat.id)',
-      )
+      .leftJoin('chat.messages', 'messages', 'messages.id = (SELECT MAX(id) FROM messages WHERE chatId = chat.id)')
       .orderBy('messages.createdAt', 'DESC');
     return qb.getMany();
   }
 
   async findOne(id: number) {
-    if (!id) return;
+    if(!id) return 
     const chat = await this.repository.findOne({
       where: { id },
-      relations: [
-        'members',
-        'members.user',
-        'messages',
-        'messages.sender',
-        'admin',
-        'rounds',
-        'rounds.riddler',
-        'rounds.moves',
-        'rounds.moves.player',
-      ],
+      relations: ['members', 'members.user', 'messages', 'messages.sender', 'admin', 'rounds', 'rounds.riddler', 'rounds.moves', 'rounds.moves.player'],
     });
 
     const sortedMessages = chat.messages.sort((a, b) => {
@@ -103,29 +82,27 @@ export class ChatService {
       return timeA - timeB;
     });
 
-    return { ...chat, messages: sortedMessages, rounds: sortedRounds };
+    return {...chat, messages: sortedMessages, rounds: sortedRounds }
   }
 
-  async update(id: number, image_url: string) {
-    return this.repository.update(id, { image_url });
+  async update(id: number, memberId: number) {
+    return 'update chat'
   }
 
   remove(id: number) {
-    return this.repository.delete(id);
+    return this.repository.delete(id)
   }
 
   async findChatsByUserId(userId: number, query?: string) {
-    if (!userId) return;
+    if(!userId) return 
     const qb = this.repository.createQueryBuilder('chat');
-    qb.leftJoinAndSelect('chat.messages', 'chatMessages');
-    qb.leftJoinAndSelect('chatMessages.sender', 'sender');
+    qb.leftJoinAndSelect('chat.messages', 'chatMessages')
+    qb.leftJoinAndSelect('chatMessages.sender', 'sender')
     qb.leftJoinAndSelect('chat.members', 'members');
     qb.leftJoinAndSelect('members.user', 'user');
     qb.leftJoinAndSelect('chat.rounds', 'rounds');
-    qb.leftJoinAndSelect('rounds.moves', 'moves').orderBy(
-      'chatMessages.createdAt',
-      'DESC',
-    );
+    qb.leftJoinAndSelect('rounds.moves', 'moves')
+    .orderBy('chatMessages.createdAt', 'DESC');
     qb.where('user.id = :currentUserId', { currentUserId: userId });
     let chats = await qb.getMany();
 
@@ -141,29 +118,27 @@ export class ChatService {
         });
     }
 
-    chats = chats.map((chat) => {
-      let lastMessage: MessageEntity;
-      let lastMove: MoveEntity;
-      let status: string;
-      if (chat.type !== 'game') {
-        lastMessage = chat.messages.length ? chat.messages[0] : null;
+    chats = chats.map(chat => {
+      let lastMessage: MessageEntity
+      let lastMove: MoveEntity
+      let status: string
+      if(chat.type !== 'game') {
+        lastMessage = chat.messages.length ? chat.messages[0] : null; 
       } else {
         const lastRound = chat.rounds.length ? chat.rounds[0] : null;
-        status = lastRound.submiting >= 2 ? 'started' : 'not started';
-        lastMove = lastRound.moves.length
-          ? lastRound.moves[lastRound.moves.length - 1]
-          : null;
+        status = lastRound.submiting >= 2 ? 'started' : 'not started'
+        lastMove = lastRound.moves.length ? lastRound.moves[lastRound.moves.length - 1] : null
       }
 
       delete chat.messages;
-      delete chat.rounds;
+      delete chat.rounds
       return {
         ...chat,
         lastMessage,
         lastMove,
-        status,
-      };
-    });
+        status
+      }
+    })
     return chats;
   }
 
@@ -172,20 +147,19 @@ export class ChatService {
     qb.leftJoin('chat.members', 'member');
     qb.leftJoin('member.user', 'user');
     qb.where('user.id = :currentUserId', { currentUserId: id });
-    qb.leftJoin('chat.messages', 'messages').orderBy(
-      'messages.createdAt',
-      'DESC',
-    );
+    qb.leftJoin('chat.messages', 'messages')
+    .orderBy('messages.createdAt', 'DESC');
     qb.leftJoinAndSelect('chat.members', 'chatMembers');
     qb.leftJoinAndSelect('chatMembers.user', 'chatMembersUser');
     qb.leftJoinAndSelect('chat.rounds', 'rounds');
-    qb.where('chat.type = :type', { type: 'game' });
+    qb.where('chat.type = :type', { type: 'game' })
     qb.where('user.id = :currentUserId', { currentUserId: id });
-    qb.andWhere('chat.type = :type', { type: 'game' });
+    qb.andWhere('chat.type = :type', { type: 'game' })
 
     return qb.getMany();
   }
-  searchChats(id: number, queries: { query: string; type: string }) {
+  searchChats(id: number, queries: {query: string, type: string}) {
+
     const qb = this.repository.createQueryBuilder('chat');
     qb.leftJoinAndSelect('chat.members', 'chatMembers');
     qb.leftJoinAndSelect('chatMembers.user', 'chatMembersUser');
@@ -193,14 +167,14 @@ export class ChatService {
     qb.leftJoin('chat.members', 'member');
     qb.leftJoin('member.user', 'user');
     qb.where('user.id = :currentUserId', { currentUserId: id });
-    qb.andWhere('chat.name LIKE :name', { name: `%${queries.query}%` });
+    qb.andWhere('chat.name LIKE :name', { name: `%${queries.query}%`})
 
-    if (queries.type !== 'all') {
-      qb.andWhere('chat.type = :type', { type: queries.type });
+    if(queries.type !== 'all') {
+      qb.andWhere('chat.type = :type', { type: queries.type })
     } else {
-      qb.andWhere('chat.type != :type', { type: 'direct' });
+      qb.andWhere('chat.type != :type', { type: 'direct' })
     }
-
+    
     return qb.getMany();
   }
 }

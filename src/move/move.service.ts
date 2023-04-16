@@ -9,6 +9,7 @@ import { RoundEntity } from '../round/entities/round.entity';
 import { RoundService } from '../round/round.service';
 import axios from 'axios';
 
+
 @Injectable()
 export class MoveService {
   constructor(
@@ -43,6 +44,7 @@ export class MoveService {
       } catch (err) {
         error = err
       }
+      
       if(!error && accept && !alreadyExist) {
         const move = await this.repository.save({ ...dto, player: user, round});
         return {...move, correct: true}
