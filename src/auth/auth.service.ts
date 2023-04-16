@@ -1,8 +1,9 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { UserService } from '../user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { UserEntity } from "../user/entities/user.entity";
-import { CreateUserDto } from "../user/dto/create-user.dto";
+import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from '../user/dto/create-user.dto';
+import { UserEntity } from '../user/entities/user.entity';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AuthService {
@@ -14,11 +15,14 @@ export class AuthService {
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userService.findByCond({
       email,
-      password,
     });
-    if (user && user.password === password) {
-      const { password, ...result } = user;
-      return result;
+    if (user) {
+      const isEqual = await bcrypt.compare(password, user.password);
+      console.log(isEqual);
+      if (isEqual) {
+        const { password, ...result } = user;
+        return result;
+      }
     }
     return null;
   }
@@ -38,11 +42,12 @@ export class AuthService {
 
   async register(dto: CreateUserDto) {
     try {
+      const hashedPassword = await bcrypt.hash(dto.password, 10);
       const { password, ...userData } = await this.userService.create({
         email: dto.email,
         fullName: dto.fullName,
-        password: dto.password,
-        imageUrl: dto.imageUrl
+        password: hashedPassword,
+        imageUrl: dto.imageUrl,
       });
       return {
         ...userData,

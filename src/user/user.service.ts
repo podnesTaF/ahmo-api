@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -35,10 +36,13 @@ export class UserService {
 
   async updatePasswd(id: number, updateUserDto: UpdateUserDto) {
     const user = await this.repository.findOne({ where: { id } });
-    if (updateUserDto.oldPassword === user.password) {
-      return this.repository.update(id, {
-        password: updateUserDto.newPassword,
-      });
+    const isEqual = await bcrypt.compare(
+      updateUserDto.oldPassword,
+      user.password,
+    );
+    if (isEqual) {
+      const hashedPassword = await bcrypt.hash(updateUserDto.newPassword, 10);
+      return this.repository.update(id, { password: hashedPassword });
     } else {
       throw new ForbiddenException('The old password provided is wrong');
     }
